@@ -3,339 +3,399 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AYC | Medical Student & Developer</title>
-  <meta name="description" content="Medical student building free educational tools for the medical community">
+  <title>AYC | Logic Architect</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }
+    :root {
+      --bg: #050505; --card: #0a0a0a; --text: #e2e8f0; --accent: #10b981; --border: #1e293b; --title-color: #ffffff;
+    }
+    .theme-light {
+      --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --accent: #059669; --border: #e2e8f0; --title-color: #0f172a;
+    }
+    .theme-toxic {
+      --bg: #000000; --card: #050505; --text: #10b981; --accent: #10b981; --border: #10b981; --title-color: #10b981;
+    }
+
+    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; transition: background 0.5s ease, color 0.3s ease; overflow-x: hidden; }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; color: var(--title-color); }
+    
+    /* Splash Screen - RED DESIGN RESTORED */
+    #splash-screen {
+      position: fixed; inset: 0; background: #000; z-index: 1000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px; text-align: center;
+    }
+    .warning-box {
+      border: 1px solid #dc2626; padding: 2rem; max-width: 500px;
+      background: rgba(220, 38, 38, 0.05); border-radius: 4px;
+    }
+
+    #weather-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 50; }
+    
+    .project-card, .video-card, .stats-card { 
+      background-color: var(--card); border: 1px solid var(--border); 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative; overflow: hidden;
+    }
+    .project-card:hover, .stats-card:hover { transform: translateY(-4px); border-color: var(--accent); }
+    
+    .filter-btn.active { background-color: var(--accent); color: white; border-color: var(--accent); }
+    .glow-text { text-shadow: 0 0 15px var(--accent); }
+
+    /* XP Bar */
+    #xp-container { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0,0,0,0.1); z-index: 200; }
+    #xp-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67); box-shadow: 0 0 10px var(--accent); }
+
+    /* Terminal Log */
+    #terminal-log { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--accent); opacity: 0.8; height: 1.2em; overflow: hidden; }
+
+    /* Anatomical Pulse */
+    .organ-bg {
+      position: absolute; right: -10px; bottom: -10px; opacity: 0.03; pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease; width: 100px; fill: var(--accent);
+    }
+    .project-card:hover .organ-bg, .stats-card:hover .organ-bg { opacity: 0.12; transform: scale(1.1) rotate(-5deg); }
+
+    .control-panel { background: var(--card); border: 1px solid var(--border); z-index: 100; }
+
+    @keyframes glitch-flash {
+      0% { background: var(--accent); opacity: 0.8; }
+      100% { background: transparent; opacity: 0; }
+    }
+    .level-flash { position: fixed; inset: 0; z-index: 300; pointer-events: none; animation: glitch-flash 0.5s ease-out; }
+
+    /* Analytics Styles */
+    .stat-bar-bg { background: rgba(30, 41, 59, 0.5); height: 6px; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .stat-bar-fill { height: 100%; width: 0; transition: width 1.5s cubic-bezier(0.19, 1, 0.22, 1); }
   </style>
 </head>
-<body class="bg-slate-50">
-  
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200">
-    <div class="max-w-4xl mx-auto px-6 py-8">
-      <h1 class="text-4xl font-bold text-slate-900 mb-2">AYC</h1>
-      <p class="text-xl text-slate-600">Medical Student | Class of 2027</p>
-      <p class="text-slate-500 mt-2 italic">Building free tools between panic attacks and practice questions</p>
+<body class="selection:bg-emerald-500/30">
+
+  <div id="splash-screen">
+    <div class="warning-box">
+      <h2 class="text-rose-600 font-bold tracking-[0.3em] mb-4 text-xs uppercase">!! CLINICAL ADVISORY !!</h2>
+      <p class="text-slate-300 text-sm mb-6 leading-relaxed">
+        This site contains high-yield side quests intended for medical students.
+        <br><br>
+        <strong>PROCEED WITH CAUTION:</strong> Exposure may cause significant increases in board scores, decreased burnout levels, and temporary relief from library-induced psychosis.
+      </p>
+      <button onclick="dismissSplash()" class="px-10 py-3 border border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest">
+        I Consent to Enter
+      </button>
     </div>
+  </div>
+
+  <div id="xp-container"><div id="xp-bar"></div></div>
+  <canvas id="weather-canvas"></canvas>
+
+  <aside class="control-panel fixed bottom-6 right-6 p-4 rounded-2xl shadow-2xl flex flex-col gap-4">
+    <div class="space-y-2">
+      <p class="text-[10px] font-bold uppercase tracking-widest opacity-50">Visual Theme</p>
+      <div class="flex gap-2">
+        <button onclick="setTheme('dark'); gainXP(5);" class="w-6 h-6 rounded-full bg-black border border-white/20" title="Deep Sea"></button>
+        <button onclick="setTheme('light'); gainXP(5);" class="w-6 h-6 rounded-full bg-white border border-black/20" title="Arctic"></button>
+        <button onclick="setTheme('toxic'); gainXP(5);" class="w-6 h-6 rounded-full bg-emerald-500 border border-emerald-900" title="Toxic"></button>
+      </div>
+    </div>
+    <div class="h-px bg-slate-800/30"></div>
+    <div class="space-y-2">
+      <p class="text-[10px] font-bold uppercase tracking-widest opacity-50">Atmosphere</p>
+      <select onchange="setWeather(this.value); gainXP(5);" class="bg-transparent text-[10px] font-bold uppercase outline-none cursor-pointer w-full text-[var(--text)]">
+        <option value="none">Clear</option>
+        <option value="snow">Snow</option>
+        <option value="rain">Rain</option>
+        <option value="static">Static</option>
+      </select>
+    </div>
+    <div class="h-px bg-slate-800/30"></div>
+    <div id="terminal-log">Initializing protocols...</div>
+  </aside>
+
+  <header class="max-w-5xl mx-auto px-6 pt-20 pb-12">
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div>
+        <h1 class="text-7xl font-extrabold tracking-tighter glow-text">AYC<span class="text-emerald-500">.</span></h1>
+        <p class="text-xl opacity-70 font-medium mt-4 uppercase tracking-widest text-sm italic">Building tools between panic attacks and practice questions</p>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="text-[10px] font-bold uppercase tracking-tighter opacity-60">Imposter Syndrome Level: <span id="level-val" class="text-emerald-500">1</span></div>
+        <a href="https://github.com/git-psyched" target="_blank" rel="noopener noreferrer" class="text-sm font-bold tracking-widest uppercase hover:text-emerald-400 transition-colors">Github</a>
+      </div>
+    </div>
+    <div class="h-px bg-slate-800 mt-10 w-full opacity-20"></div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-4xl mx-auto px-6 py-12">
+  <main class="max-w-5xl mx-auto px-6 py-12">
     
-    <!-- About Section -->
-    <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">About</h2>
-      <p class="text-slate-700 leading-relaxed mb-4">
-        I'm a medical student passionate about making board exam preparation more accessible and less soul-crushing. 
-        Between Anki cards and practice questions, I build free web applications to help my classmates study smarter.
-      </p>
-      <p class="text-slate-700 leading-relaxed">
-        All projects are open-source, free forever, and built with the philosophy that educational resources 
-        shouldn't be locked behind paywalls.
-      </p>
-    </section>
-
-    <!-- Projects Section -->
-    <section class="mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-6">Projects</h2>
-
-      <!-- Project 4: RoundsSimulator -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-4 hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">RoundsSimulator</h3>
-            <p class="text-sm text-slate-500">Pimping Simulator</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
-        </div>
-        <p class="text-slate-700 mb-4">
-          Ever stepped into the shoes of a student who is down 50 hours of sleep, 
-          $150k in debt, and just hoping for a share of external validation from his idols... only to get pimped?
+    <section class="grid md:grid-cols-2 gap-12 mb-32">
+      <div class="space-y-6">
+        <h2 class="text-sm uppercase tracking-[0.2em] text-emerald-500 font-bold">// WHY_I_BUILD</h2>
+        <p class="text-4xl font-light leading-tight">
+          Resting feels like a <span class="italic font-bold text-rose-600 drop-shadow-[0_0_8px_rgba(225,29,72,0.4)]">Security Breach</span>.
         </p>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">React</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">JavaScript</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">Free Time</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="https://git-psyched.github.io/RoundsSimulator/" target="_blank" 
-             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
-            Play Game →
-          </a>
-          <a href="https://github.com/git-psyched/RoundsSimulator" target="_blank"
-             class="border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded text-sm font-semibold transition-colors">
-            View Code
-          </a>
-        </div>
-      </div>
-
- <!-- Project 5: Gene-Link -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-4 hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">Gene-Link</h3>
-            <p class="text-sm text-slate-500">Turn grueling medical memorization into a dopamine-fueled protocol</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
-        </div>
-        <p class="text-slate-700 mb-4">
-          A game about genes and their inheritance. Because if I have to remember that Huntington's is a CAG repeat on Chromosome 4
-          one more time without a game to distract me, I’m going to have a chorea-induced breakdown. 
-          Here's to the 10,001st time! 
-        </p>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">React</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">JavaScript</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">Free Time</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="https://git-psyched.github.io/Gene-Link/" target="_blank" 
-             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
-            Play Game →
-          </a>
-          <a href="https://github.com/git-psyched/Gene-Link" target="_blank"
-             class="border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded text-sm font-semibold transition-colors">
-            View Code
-          </a>
-        </div>
-      </div>
-
-      <!-- Project 1: DiagnoLink -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-4 hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">DiagnoLink</h3>
-            <p class="text-sm text-slate-500">Daily Medical Puzzle Game</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
-        </div>
-        <p class="text-slate-700 mb-4">
-          A daily puzzle game where medical students connect symptoms, treatments, lab tests, and risk factors 
-          to identify diagnoses. Features 125+ conditions optimized for STEP 2/3 preparation with automatic 
-          daily puzzles and progress tracking. New features like Psych-focused puzzles or other specific niches 
-          are in development!
-        </p>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">React</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">JavaScript</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">Free Time</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="https://git-psyched.github.io/DiagnoLink/" target="_blank" 
-             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
-            Play Game →
-          </a>
-          <a href="https://github.com/git-psyched/DiagnoLink" target="_blank"
-             class="border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded text-sm font-semibold transition-colors">
-            View Code
-          </a>
-        </div>
-      </div>
-
-
-
-      <!-- Project 2: PsychConnections -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-4 hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">PsychConnections</h3>
-            <p class="text-sm text-slate-500">Psych Shelf Puzzle Game</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
-        </div>
-        <p class="text-slate-700 mb-4">
-          A daily puzzle game where medical students connect symptoms, DSM criteria, treatment, and risk factors 
-          to identify diagnoses. Features 60+ conditions optimized for Psych Shelf and STEP 2/3 preparation with automatic 
-          daily puzzles and progress tracking. More Psych-games incoming!
-        </p>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">React</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">JavaScript</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">Free Time</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="https://git-psyched.github.io/PsychConnections/" target="_blank" 
-             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
-            Play Game →
-          </a>
-          <a href="https://github.com/git-psyched/PsychConnections" target="_blank"
-             class="border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded text-sm font-semibold transition-colors">
-            View Code
-          </a>
-        </div>
-      </div>
-
-   <!-- Project 3: ToxicMatch -->
-      <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-4 hover:shadow-md transition-shadow">
-        <div class="flex items-start justify-between mb-3">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">ToxicMatch</h3>
-            <p class="text-sm text-slate-500">Psych Shelf Puzzle Game</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">Live</span>
-        </div>
-        <p class="text-slate-700 mb-4">
-          Arcade/Tetris inspired version of matching drugs with side effects! What could go wrong?
-        </p>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">React</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">JavaScript</span>
-          <span class="bg-slate-100 text-slate-700 text-xs px-3 py-1 rounded">Free Time</span>
-        </div>
-        <div class="flex gap-3">
-          <a href="https://git-psyched.github.io/ToxicMatch/" target="_blank" 
-             class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
-            Play Game →
-          </a>
-          <a href="https://github.com/git-psyched/ToxicMatch" target="_blank"
-             class="border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded text-sm font-semibold transition-colors">
-            View Code
-          </a>
-        </div>
-      </div>
-
-
-
-      <!-- Placeholder for Future Projects -->
-      <div class="bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 p-6 mb-4">
-        <h3 class="text-lg font-bold text-slate-700 mb-2">More Projects Coming Soon</h3>
-        <p class="text-slate-600 text-sm">
-          Currently working on additional study tools specific for certain fields/blocks. Psych is coming soon! 
-          Check back or follow on GitHub for updates.
+        <p class="opacity-70 text-lg leading-relaxed">
+          I'm in that high-stakes cycle where if I stop for even a second, I feel like I'll forget everything I've ever learned. I built these as a way to stay in the zone without falling into the trap of doomscrolling through another library-induced breakdown.
         </p>
       </div>
-    </section>
-
-    <!-- Philosophy Section -->
-    <section class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg p-8 mb-8 text-white">
-      <h2 class="text-2xl font-bold mb-6">Why I Build</h2>
       
-      <!-- Noble Version -->
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold mb-3 text-emerald-400">Noble version:</h3>
-        <p class="leading-relaxed">
-          Medical education is expensive enough. Study resources shouldn't add to the financial burden. 
-          Every tool I create is free, has no ads, requires no login, and will always be open-source.
+      <div class="project-card p-8 rounded-2xl h-fit">
+        <div class="absolute top-0 right-0 p-2 text-[10px] text-slate-700 uppercase font-bold bg-slate-900/50">Developer.log</div>
+        <h3 class="text-rose-500 font-bold mb-4 uppercase tracking-wider text-xs">The Philosophy</h3>
+        <div class="space-y-4 text-sm leading-relaxed opacity-70">
+          <p>Medical education is expensive enough. Resources shouldn't add to the burden. I build these because I believe board prep should be accessible and, occasionally, even enjoyable.</p>
+          <p class="text-emerald-500 font-medium italic">Side effects may include: Actually feeling prepared for rounds.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-32">
+      <div class="stats-card p-10 rounded-3xl max-w-4xl relative group">
+        <svg class="organ-bg" viewBox="0 0 100 100"><path d="M50 10 L10 90 L90 90 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+        
+        <div class="flex items-baseline gap-4 mb-12">
+          <span class="text-7xl font-extrabold tracking-tighter group-hover:text-emerald-400 transition-colors">292</span>
+          <span class="text-emerald-500 text-xs font-bold uppercase tracking-[0.4em]">Total Hours Invested</span>
+        </div>
+
+        <div class="grid gap-10">
+          <div class="group/bar transition-transform hover:-translate-y-1">
+            <div class="flex justify-between items-end mb-1">
+              <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-rose-500">Intensity: Critical</span>
+                <h4 class="text-sm font-bold uppercase tracking-widest opacity-90">Clinical Fact-Checking & Accuracy</h4>
+              </div>
+              <span class="text-sm font-mono text-rose-500 font-bold">132 Hours</span>
+            </div>
+            <div class="stat-bar-bg"><div id="bar-clinical" class="stat-bar-fill bg-rose-600 shadow-[0_0_10px_rgba(225,29,72,0.4)]"></div></div>
+          </div>
+
+          <div class="group/bar transition-transform hover:-translate-y-1">
+            <div class="flex justify-between items-end mb-1">
+              <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500">Intensity: Moderate</span>
+                <h4 class="text-sm font-bold uppercase tracking-widest opacity-90">UI Design & Micro-Animations</h4>
+              </div>
+              <span class="text-sm font-mono text-orange-500 font-bold">116 Hours</span>
+            </div>
+            <div class="stat-bar-bg"><div id="bar-ui" class="stat-bar-fill bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]"></div></div>
+          </div>
+
+          <div class="group/bar transition-transform hover:-translate-y-1">
+            <div class="flex justify-between items-end mb-1">
+              <div class="space-y-1">
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500">Intensity: Baseline</span>
+                <h4 class="text-sm font-bold uppercase tracking-widest opacity-90">Backend Logic & Architecture</h4>
+              </div>
+              <span class="text-sm font-mono text-emerald-500 font-bold">44 Hours</span>
+            </div>
+            <div class="stat-bar-bg"><div id="bar-logic" class="stat-bar-fill bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-32">
+      <div class="flex flex-col mb-10">
+        <div class="flex items-center gap-4">
+          <h2 class="text-3xl font-bold tracking-tight italic">Burnout Prophylaxis</h2>
+          <span class="text-[10px] text-rose-500 font-mono border border-rose-500/30 px-2 py-1 rounded">Burnout-Mitigation.lib</span>
+        </div>
+        <p class="text-sm opacity-60 mt-4 max-w-2xl leading-relaxed">
+          It's easy to get lost in the rat race and forget why we joined medicine in the first place. When you're drowning in self-doubt and the anxiety of the next assessment, these videos help me stay afloat. I take these <strong>QD</strong>, and if I feel like the system is going to crash, I shift to <strong>BID</strong> to remain free of burnout and remember the human on the other side of the stethoscope.
         </p>
       </div>
-
-      <!-- Honest Version -->
-      <div>
-        <h3 class="text-lg font-semibold mb-3 text-rose-400">The Honest Version:</h3>
-        <div class="space-y-4 leading-relaxed">
-          <p>
-            If I'm being real: I built this because I am an anxious person. I'm currently in that high-stakes 
-            cycle where resting feels like a security breach. There's this constant, nagging fear that if I 
-            stop moving, I'll lose everything I've worked for—or worse, the information I just spent 6 hours 
-            memorizing will simply evaporate.
-          </p>
-          
-          <p>
-            I created these games as a "Productive Peace-Offering" for my own brain. When I've finished banging 
-            through 500+ Anki cards or a soul-crushing UWorld block, my body is wiped, but my mind is still 
-            redlining. I'm too fried for "Active Recall," but too caffeinated to actually "relax."
-          </p>
-          
-          <p>
-            This is my way of reclaiming the "In-Between." It's Medical Pattern Recognition Training—at least, 
-            that's what I tell my therapist so I don't have to admit I've forgotten how to sit still. It's a 
-            low-stakes "Side Quest" designed for those few minutes of downtime before you head back into the grind.
-          </p>
-          
-          <p>
-            I truly enjoy the art of studying, and I hope these tools help you appease your own "Guilt-Trip 
-            Simulator" while you work toward your goals.
-          </p>
-          
-          <p class="text-sm italic text-slate-300 pt-2 border-t border-slate-700">
-            Side effects may include improved board scores and a slightly less disappointed inner monologue.
-          </p>
+      
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="video-card p-6 rounded-xl flex items-center justify-between group">
+          <a href="https://www.youtube.com/watch?v=SaSZdCauekg" target="_blank" class="flex items-center gap-6" onclick="gainXP(15)">
+            <div class="text-rose-500 group-hover:scale-125 transition-transform text-2xl">●</div>
+            <div><h4 class="font-bold group-hover:text-emerald-400 transition-colors">Navigating Anxiety</h4><p class="text-[10px] opacity-50 uppercase mt-1">External Validation Protocol</p></div>
+          </a>
+        </div>
+        <div class="video-card p-6 rounded-xl flex items-center justify-between group">
+          <a href="https://www.youtube.com/watch?v=BIBRXHaYozY" target="_blank" class="flex items-center gap-6" onclick="gainXP(15)">
+            <div class="text-blue-500 group-hover:scale-125 transition-transform text-2xl">●</div>
+            <div><h4 class="font-bold group-hover:text-emerald-400 transition-colors">Healing Validation Needs</h4><p class="text-[10px] opacity-50 uppercase mt-1">System Patch v1.0</p></div>
+          </a>
+        </div>
+        <div class="video-card p-6 rounded-xl flex items-center justify-between group">
+          <a href="https://www.youtube.com/watch?v=OoVoWB44WrI" target="_blank" class="flex items-center gap-6" onclick="gainXP(15)">
+            <div class="text-emerald-500 group-hover:scale-125 transition-transform text-2xl">●</div>
+            <div><h4 class="font-bold group-hover:text-emerald-400 transition-colors">Resilience Strategies</h4><p class="text-[10px] opacity-50 uppercase mt-1">High-Yield Self Care</p></div>
+          </a>
+        </div>
+        <div class="video-card p-6 rounded-xl flex items-center justify-between group">
+          <a href="https://www.youtube.com/watch?v=Igjg0oadp0I" target="_blank" class="flex items-center gap-6" onclick="gainXP(15)">
+            <div class="text-purple-500 group-hover:scale-125 transition-transform text-2xl">●</div>
+            <div><h4 class="font-bold group-hover:text-emerald-400 transition-colors">The Concept of Enoughness</h4><p class="text-[10px] opacity-50 uppercase mt-1">Clinical Mindset</p></div>
+          </a>
         </div>
       </div>
     </section>
 
-    <!-- Impact Section -->
-    <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">Impact</h2>
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="text-center">
-          <div class="text-4xl font-bold text-slate-900 mb-2">125+</div>
-          <div class="text-sm text-slate-600">Medical Conditions</div>
+    <section id="projects" class="mb-16">
+      <div class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+        <h2 class="text-4xl font-bold tracking-tight italic">The Lab</h2>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="filterProjects('all', this); gainXP(5);" class="filter-btn active border border-slate-800 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">All</button>
+          <button onclick="filterProjects('im', this); gainXP(5);" class="filter-btn border border-slate-800 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">Internal Med</button>
+          <button onclick="filterProjects('psych', this); gainXP(5);" class="filter-btn border border-slate-800 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">Psychiatry</button>
+          <button onclick="filterProjects('genetics', this); gainXP(5);" class="filter-btn border border-slate-800 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">Genetics</button>
+          <button onclick="filterProjects('sim', this); gainXP(5);" class="filter-btn border border-slate-800 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">Sims</button>
         </div>
-        <div class="text-center">
-          <div class="text-4xl font-bold text-slate-900 mb-2">100%</div>
-          <div class="text-sm text-slate-600">Free & Open Source</div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="im">
+          <svg class="organ-bg" viewBox="0 0 100 100"><path d="M50 20c-15 0-25 10-25 25s10 35 25 35 25-20 25-35-10-25-25-25z"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">Culture Shock</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Turn-based antibiotic stewardship. Defeat pathogens with narrow-spectrum logic.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/Culture-Shock/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/Culture-Shock" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
         </div>
-        <div class="text-center">
-          <div class="text-4xl font-bold text-slate-900 mb-2">0</div>
-          <div class="text-sm text-slate-600">Paywalls or Ads</div>
+
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="im">
+          <svg class="organ-bg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">DiagnoLink</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Daily medical puzzle connecting symptoms and labs for 125+ conditions.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/DiagnoLink/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/DiagnoLink" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
+        </div>
+
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="psych">
+          <svg class="organ-bg" viewBox="0 0 100 100"><path d="M30 50c0-15 10-25 20-25s20 10 20 25-10 25-20 25-20-10-20-25z"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">PsychConnections</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Master DSM-5 criteria in a high-speed format. Built for the Psych Shelf.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/PsychConnections/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/PsychConnections" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
+        </div>
+
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="psych">
+          <svg class="organ-bg" viewBox="0 0 100 100"><path d="M20 80h60v-20h-60z"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">ToxicMatch</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Tetris-inspired side effect matching. Pharm arcade survival for the clinical mind.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/ToxicMatch/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/ToxicMatch" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
+        </div>
+        
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="sim">
+          <svg class="organ-bg" viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="40"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">RoundsSimulator</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Experience being pimped while down 50 hours of sleep. Survive the cold calling.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/RoundsSimulator/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/RoundsSimulator" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
+        </div>
+
+        <div class="project-card p-8 rounded-2xl flex flex-col justify-between" data-category="genetics">
+          <svg class="organ-bg" viewBox="0 0 100 100"><path d="M40 20l20 60M60 20l-20 60" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <div><h3 class="text-2xl font-bold mb-3">Gene-Link</h3><p class="opacity-60 mb-8 text-sm leading-relaxed">Trinucleotide repeats and inheritance patterns through interactive logic.</p></div>
+          <div class="flex gap-3">
+            <a href="https://git-psyched.github.io/Gene-Link/" target="_blank" class="flex-1 bg-white text-black text-center py-3 rounded-xl text-xs font-bold hover:bg-emerald-400 transition-colors uppercase">Play Game →</a>
+            <a href="https://github.com/git-psyched/Gene-Link" target="_blank" class="px-6 border border-slate-800 text-center py-3 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors uppercase">Repo</a>
+          </div>
         </div>
       </div>
     </section>
-
-    <!-- Skills Section -->
-    <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">Technical Skills</h2>
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div>
-          <h4 class="font-semibold text-slate-900 mb-2">Languages</h4>
-          <ul class="text-slate-700 text-sm space-y-1">
-            <li>JavaScript</li>
-            <li>HTML/CSS</li>
-            <li>Python</li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold text-slate-900 mb-2">Frameworks</h4>
-          <ul class="text-slate-700 text-sm space-y-1">
-            <li>React</li>
-            <li>Tailwind CSS</li>
-            <li>Node.js</li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold text-slate-900 mb-2">Tools</h4>
-          <ul class="text-slate-700 text-sm space-y-1">
-            <li>Git/GitHub</li>
-            <li>GitHub Pages</li>
-            <li>VS Code</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-      <h2 class="text-2xl font-bold text-slate-900 mb-4">Get In Touch</h2>
-      <p class="text-slate-700 mb-6">
-        Interested in collaborating on educational tools? Have ideas for new features? Just want to say hi?
-      </p>
-      <div class="flex flex-wrap gap-4">
-        <a href="https://github.com/git-psyched" target="_blank"
-           class="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          GitHub
-        </a>
-        <a href="mailto:"
-           class="border-2 border-slate-300 hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-lg font-semibold transition-colors">
-          Email Me
-        </a>
-      </div>
-    </section>
-
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 mt-12">
-    <div class="max-w-4xl mx-auto px-6 py-8 text-center text-slate-600 text-sm">
-      <p class="mb-2">Built by a broke med student trying to make board prep less miserable.</p>
-      <p>All projects are free, open-source, and always will be.</p>
-    </div>
+  <footer class="bg-[#050505] border-t border-slate-900 py-20 text-center">
+    <p class="text-slate-700 text-[10px] uppercase tracking-[0.4em]">Design by necessity. Logic by choice. Class of 2027.</p>
   </footer>
 
+  <script>
+    function dismissSplash() {
+      const splash = document.getElementById('splash-screen');
+      splash.style.opacity = '0';
+      splash.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        splash.remove();
+        triggerStats();
+      }, 500);
+      gainXP(10);
+      updateLog("AUTHENTICATED: Session Started.");
+    }
+
+    function triggerStats() {
+      // Scale: 292 total hours
+      document.getElementById('bar-clinical').style.width = "45%"; // 132/292
+      document.getElementById('bar-ui').style.width = "40%";       // 116/292
+      document.getElementById('bar-logic').style.width = "15%";    // 44/292
+    }
+
+    let xp = 0; let level = 1;
+    function gainXP(amt) {
+      xp += amt;
+      const bar = document.getElementById('xp-bar');
+      if(xp >= 100) { xp = 0; level++; document.getElementById('level-val').innerText = level; triggerLevelUp(); }
+      bar.style.width = xp + "%";
+    }
+
+    function triggerLevelUp() {
+      const flash = document.createElement('div');
+      flash.className = 'level-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 500);
+      updateLog("SYSTEM UPDATE: Imposter Syndrome Mitigation Engaged.");
+    }
+
+    const logMessages = ["Analyzing patterns...", "Logic Protocol: Active.", "Optimization in progress..."];
+    let logIdx = 0;
+    function updateLog(msg) {
+      const el = document.getElementById('terminal-log');
+      if(el) {
+        el.innerText = `[LOG] ${msg || logMessages[logIdx]}`;
+        logIdx = (logIdx + 1) % logMessages.length;
+      }
+    }
+    setInterval(() => updateLog(), 4000);
+
+    function setTheme(mode) {
+      document.body.classList.remove('theme-light', 'theme-toxic');
+      if(mode !== 'dark') document.body.classList.add('theme-' + mode);
+    }
+
+    const canvas = document.getElementById('weather-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = []; let weatherType = 'none';
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    function setWeather(type) {
+      weatherType = type; particles = [];
+      const count = type === 'static' ? 800 : 150;
+      for(let i=0; i<count; i++) {
+        particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, v: Math.random() * 2 + 1, size: Math.random() * 2 });
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if(weatherType !== 'none') {
+        ctx.fillStyle = weatherType === 'static' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.4)';
+        particles.forEach(p => {
+          if(weatherType === 'snow') { p.y += p.v * 0.5; p.x += Math.sin(p.y/20); ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
+          else if (weatherType === 'rain') { p.y += p.v * 5; ctx.fillRect(p.x, p.y, 1, 10); }
+          else if (weatherType === 'static') { p.x = Math.random() * canvas.width; p.y = Math.random() * canvas.height; ctx.fillRect(p.x, p.y, 2, 2); }
+          if(p.y > canvas.height) p.y = -10;
+        });
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    function filterProjects(category, btn) {
+      const cards = document.querySelectorAll('.project-card[data-category]');
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      cards.forEach(c => c.style.display = (category === 'all' || c.dataset.category === category) ? 'flex' : 'none');
+    }
+  </script>
 </body>
 </html>
